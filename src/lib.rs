@@ -1,4 +1,3 @@
-mod cache;
 mod db;
 mod config;
 mod util;
