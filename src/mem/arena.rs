@@ -10,17 +10,17 @@ pub trait Arena {
     /// Allocate memory for a node by given height.
     /// This method allocates a Node size + height * ptr ( u64 ) memory area.
     // TODO: define the potential errors and return Result<Error, *mut Node> instead of raw pointer
-    fn alloc_node(&self, height: usize) -> *mut Node {}
+    fn alloc_node(&self, height: usize) -> *mut Node;
 
-    fn alloc_bytes(&self, data: Slice) -> u32 {}
+    fn alloc_bytes(&self, data: Slice) -> u32;
 
-    fn get(&self, offset: usize, count: usize) -> Slice {}
+    fn get(&self, offset: usize, count: usize) -> Slice;
 
-    fn has_room_for(&self, size: usize) -> bool {}
+    fn has_room_for(&self, size: usize) -> bool;
 
-    fn memory_used(&self) {}
+    fn memory_used(&self);
 
-    fn size(&self) {}
+    fn size(&self);
 }
 
 /// AggressiveArena is a memory pool for allocating and handling Node memory dynamically.
