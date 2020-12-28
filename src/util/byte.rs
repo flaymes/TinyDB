@@ -27,7 +27,7 @@ pub fn compare(b1: &[u8], b2: &[u8]) -> Ordering {
         );
         match result {
             -1 => Ordering::Less,
-            0 => Ordering::Equal
+            0 => Ordering::Equal,
             1 => Ordering::Greater,
             _ => panic!("invalid memcmp return [{}]", result),
         }
