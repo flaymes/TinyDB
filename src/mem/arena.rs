@@ -94,15 +94,15 @@ impl Arena for AggressiveArena {
     }
 
     fn get(&self, start: usize, count: usize) -> Slice {
-        let o = self.offset.load(Ordering::Acquire);
-        if start + count > o {
-            panic!(
-                "[arena] try to get data from [{}] to [{}] but max offset is [{}]",
-                start,
-                start + count,
-                o
-            );
-        }
+        let off = self.offset.load(Ordering::Acquire);
+        invariant!(
+            start+count<=off,
+            "[arena] try to get data from [{}] to [{}] but max offset is [{}]",
+            start,
+            start+count,
+            off
+        );
+
         let mut result = Vec::with_capacity(count);
         unsafe {
             let ptr = self.mem.as_ptr().add(start) as *mut u8;

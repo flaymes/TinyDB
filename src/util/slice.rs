@@ -1,8 +1,9 @@
+use crate::util::byte::compare;
+
 use std::cmp::Ordering;
 use std::ops::Index;
 use std::ptr;
 use std::slice;
-use crate::util::byte::compare;
 
 /// Slice is a simple structure containing a pointer into some external
 /// storage and a size.  The user of a Slice must ensure that the slice
