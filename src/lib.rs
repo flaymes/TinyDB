@@ -1,10 +1,13 @@
-mod db;
-mod config;
-mod util;
-mod mem;
-mod cache;
-mod table;
-mod level;
+extern crate log;
+extern crate byteorder;
+extern crate libc;
+extern crate rand;
+
+#[macro_use]
+pub mod util;
+pub mod config;
+pub mod db;
+pub mod mem;
 
 #[cfg(test)]
 mod tests {

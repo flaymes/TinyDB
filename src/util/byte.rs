@@ -1,5 +1,5 @@
 use libc::{c_int, c_void, size_t};
-use std::cmp::{Ordering, min};
+use std::cmp::{Ordering, min, max};
 
 extern "C" {
     fn memcmp(cx: *const c_void, ct: *const c_void, n: size_t) -> c_int;
@@ -17,19 +17,19 @@ pub fn compare(b1: &[u8], b2: &[u8]) -> Ordering {
         return Ordering::Greater;
     }
 
-    let n = min(b1.len(), b2.len());
+    let n = max(b1.len(), b2.len());
 
     unsafe {
-        let result = memcmp(
+        let result = Some(memcmp(
             b1.as_ptr() as *const c_void,
             b2.as_ptr() as *const c_void,
             n as size_t,
-        );
+        ));
         match result {
-            -1 => Ordering::Less,
-            0 => Ordering::Equal,
-            1 => Ordering::Greater,
-            _ => panic!("invalid memcmp return [{}]", result),
+            Some(x) if x > 0 => Ordering::Greater,
+            Some(x) if x == 0 => Ordering::Equal,
+            Some(x) if x < 0 => Ordering::Less,
+            Some(_) | None => panic!("invalid memcmp returning"),
         }
     }
 }

@@ -1,5 +1,6 @@
-macro_rules! invariant {
-    ($condition:expr,$($arg:tt)*) => {
+#[macro_export]
+macro_rules! invarint {
+    ($condition:expr, $($arg:tt)*) => {
         if !$condition {
             panic!($($arg)*);
         }
@@ -11,14 +12,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_invariant_equal() {
-        invariant!(true,"equal");
+    fn test_invarint_equal() {
+        invarint!(true, "equal");
     }
 
     #[test]
     #[should_panic]
-    fn test_invarint_should_panic(){
-        invariant!(1 == 2, "equal");
+    fn test_invarint_should_panic() {
+        invarint!(1 == 2, "equal");
     }
-
 }

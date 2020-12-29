@@ -65,16 +65,15 @@ impl Arena for AggressiveArena {
             let node_ptr = self.mem.as_ptr().add(n) as *mut u8;
             // get the actually to-be-used memory of node and spilt it into 2 parts:
             // node part: the Node struct
-            // next parts: the pre allocated memory used by elements of next_nodes
-            let (node_part, next_parts) = slice::from_raw_parts_mut(node_ptr, used_node_size)
+            // nexts part: the pre allocated memory used by elements of next_nodes
+            let (node_part, nexts_part) = slice::from_raw_parts_mut(node_ptr, used_node_size)
                 .split_at_mut(used_node_size - height * ptr_size);
             let node = node_part.as_mut_ptr() as *mut Node;
             // FIXME: Box::from_raw can be unsafe when releasing memory
             let next_nodes = Box::from_raw(slice::from_raw_parts_mut(
-                next_parts.as_mut_ptr() as *mut AtomicPtr<Node>,
+                nexts_part.as_mut_ptr() as *mut AtomicPtr<Node>,
                 height,
             ));
-
             (*node).height = height;
             (*node).next_nodes = next_nodes;
             node
@@ -95,13 +94,13 @@ impl Arena for AggressiveArena {
 
     fn get(&self, start: usize, count: usize) -> Slice {
         let off = self.offset.load(Ordering::Acquire);
-        invariant!(
-            start+count<=off,
-            "[arena] try to get data from [{}] to [{}] but max offset is [{}]",
-            start,
-            start+count,
-            off
-        );
+        // invarint!(
+        //     start+count<=off,
+        //     "[arena] try to get data from [{}] to [{}] but max offset is [{}]",
+        //     start,
+        //     start+count,
+        //     off
+        // );
 
         let mut result = Vec::with_capacity(count);
         unsafe {
@@ -229,6 +228,35 @@ mod tests {
                     let inmem_b = ptr.add(i);
                     assert_eq!(*inmem_b, *b);
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn test_memory_used(){
+        let arena=new_default_arena();
+        arena.alloc_node(MAX_HEIGHT);
+        arena.alloc_node(1);
+        arena.alloc_bytes(&Slice::from(vec![1u8,2u8,3u8,4u8].as_slice()));
+
+        assert_eq!(152+64+4,arena.memory_used());
+    }
+
+    #[test]
+    fn test_has_room_for() {
+        let arena = AggressiveArena::new(1);
+        assert_eq!(arena.has_room_for(100), false);
+    }
+    #[test]
+    fn test_simple_alloc_bytes() {
+        let mut arena = AggressiveArena::new(100);
+        let input = vec![1u8, 2u8, 3u8, 4u8, 5u8];
+        let offset = arena.alloc_bytes(&Slice::from(input.clone()));
+        unsafe {
+            let ptr = arena.mem.as_mut_ptr().add(offset as usize) as *mut u8;
+            for (i, b) in input.clone().iter().enumerate() {
+                let p = ptr.add(i);
+                assert_eq!(*p, *b);
             }
         }
     }

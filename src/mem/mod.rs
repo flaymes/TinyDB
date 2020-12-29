@@ -1,2 +1,2 @@
-mod arena;
-mod skiplist;
+pub mod arena;
+pub mod skiplist;

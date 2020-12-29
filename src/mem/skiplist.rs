@@ -1,9 +1,10 @@
-use std::sync::atomic::{AtomicPtr, Ordering, AtomicUsize};
-use crate::mem::arena::{Arena, AggressiveArena};
+use super::arena::*;
 use crate::util::slice::Slice;
+use crate::util::comparator::Comparator;
+
+use std::sync::atomic::{AtomicPtr, Ordering, AtomicUsize};
 use std::cmp::Ordering as CmpOrdering;
 use std::rc::Rc;
-use crate::util::comparator::Comparator;
 use std::ptr;
 use rand::random;
 
@@ -11,6 +12,8 @@ const BRANCHING: u32 = 4;
 pub const MAX_HEIGHT: usize = 12;
 pub const MAX_NODE_SIZE: usize = 10;
 
+#[derive(Debug)]
+#[repr(C)]
 pub struct Node {
     pub key_offset: u32,
     pub key_size: u64,
@@ -34,7 +37,7 @@ impl Node {
 
     pub fn get_next(&self, height: usize) -> *mut Node {
         invarint!(
-            height<=self.,
+            height<=self.height,
             "skiplist: try to get next node in height [{}] but the height of node is {}",
              height,
              self.height
@@ -47,7 +50,7 @@ impl Node {
             height<=self.height,
             "skiplist: try to set next node in height [{}] but the height of node is {}",
             height,
-            self.height;
+            self.height
         );
 
         self.next_nodes[height - 1].store(node, Ordering::Release);
