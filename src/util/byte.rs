@@ -1,5 +1,5 @@
 use libc::{c_int, c_void, size_t};
-use std::cmp::{Ordering, min, max};
+use std::cmp::{Ordering, min};
 
 extern "C" {
     fn memcmp(cx: *const c_void, ct: *const c_void, n: size_t) -> c_int;

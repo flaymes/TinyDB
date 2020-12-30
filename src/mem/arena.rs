@@ -3,7 +3,6 @@ use std::sync::atomic::{AtomicUsize, Ordering, AtomicPtr};
 use core::mem;
 
 use super::skiplist::{Node, MAX_HEIGHT, MAX_NODE_SIZE};
-use std::ptr::slice_from_raw_parts_mut;
 use std::slice;
 
 pub trait Arena {
@@ -94,23 +93,19 @@ impl Arena for AggressiveArena {
 
     fn get(&self, start: usize, count: usize) -> Slice {
         let off = self.offset.load(Ordering::Acquire);
-        // invarint!(
-        //     start+count<=off,
-        //     "[arena] try to get data from [{}] to [{}] but max offset is [{}]",
-        //     start,
-        //     start+count,
-        //     off
-        // );
+        invarint!(
+            start+count<=off,
+            "[arena] try to get data from [{}] to [{}] but max offset is [{}]",
+            start,
+            start+count,
+            off
+        );
 
-        let mut result = Vec::with_capacity(count);
         unsafe {
-            let ptr = self.mem.as_ptr().add(start) as *mut u8;
-            for i in 0..count {
-                let p = ptr.add(i) as *mut u8;
-                result.push(*p);
-            }
+            let ptr = self.mem.as_ptr().add(start) as *const u8;
+            Slice::new(ptr,count)
+
         }
-        Slice::from(result)
     }
 
     #[inline]
@@ -198,11 +193,19 @@ mod tests {
             assert_eq!(next_tails as *mut Node, node2);
         };
     }
-
+    #[test]
+    fn test_get() {
+        let arena = new_default_arena();
+        let input = vec![1u8, 2u8, 3u8, 4u8, 5u8];
+        let start = arena.alloc_bytes(&Slice::from(input.as_slice()));
+        let result = arena.get(start as usize, 5);
+        for (b1, b2) in input.iter().zip(result.to_slice()) {
+            assert_eq!(*b1, *b2);
+        }
+    }
     #[test]
     fn test_alloc_bytes_concurrency() {
         let arena = Arc::new(AggressiveArena::new(500));
-        let node = arena.alloc_node(1);
         let results = Arc::new(Mutex::new(vec![]));
         let mut tests = vec![vec![1u8, 2, 3, 4, 5], vec![6u8, 7, 8, 9], vec![10u8, 11]];
         for t in tests
@@ -212,8 +215,8 @@ mod tests {
                 let cloned_arena = arena.clone();
                 let cloned_results = results.clone();
                 thread::spawn(move || {
-                    let offset = cloned_arena.alloc_bytes(&Slice::from(test.clone())) as usize;
-                    cloned_results.lock().unwrap().push((i, offset, test.clone()));
+                    let offset = cloned_arena.alloc_bytes(&Slice::from(test.as_slice())) as usize;
+                    cloned_results.lock().unwrap().push((i, offset, test));
                 })
             })
             .collect::<Vec<_>>()
@@ -251,7 +254,7 @@ mod tests {
     fn test_simple_alloc_bytes() {
         let mut arena = AggressiveArena::new(100);
         let input = vec![1u8, 2u8, 3u8, 4u8, 5u8];
-        let offset = arena.alloc_bytes(&Slice::from(input.clone()));
+        let offset = arena.alloc_bytes(&Slice::from(&input));
         unsafe {
             let ptr = arena.mem.as_mut_ptr().add(offset as usize) as *mut u8;
             for (i, b) in input.clone().iter().enumerate() {

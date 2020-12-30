@@ -9,7 +9,6 @@ macro_rules! invarint {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_invarint_equal() {
